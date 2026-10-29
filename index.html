@@ -1,0 +1,787 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Nine Men's Morris - Winner Celebration</title>
+<style>
+:root {
+--bg-color:#f4f4f9;
+--card-bg:#f4f4f9;
+--text-color:#222;
+--line-color:#777;
+--point-default:#e0e0e0;
+--point-border:#999;
+--accent-color:#0066cc;
+--selected-border:#008000;
+--hint-color:#d0edce;
+--remove-color:#16435e;
+--red-color:#ff3b30;
+--blue-color:#3399ff;
+}
+body.dark-theme {
+--bg-color:#121212;
+--card-bg:#121212;
+--text-color:#fff;
+--line-color:#555;
+--point-default:#1a1a1a;
+--point-border:#444;
+--accent-color:#3399ff;
+--selected-border:#fff;
+--hint-color:#1d3320;
+--remove-color:#2e8ec9;
+}
+body.sage-green-theme {
+--bg-color:#99c4a5;
+--card-bg:#99c4a5;
+--text-color:#1b3322;
+--line-color:#2d5438;
+--point-default:#c1dec9;
+--point-border:#487253;
+--accent-color:#1c4d28;
+--selected-border:#fff;
+--hint-color:#e3f2e6;
+--remove-color:#702020;
+}
+body.warm-ochre-theme {
+--bg-color:#b09264;
+--card-bg:#b09264;
+--text-color:#2e210f;
+--line-color:#4a381e;
+--point-default:#d1bd9d;
+--point-border:#6e542e;
+--accent-color:#4f2e08;
+--selected-border:#fff;
+--hint-color:#f2e8d8;
+--remove-color:#731e1e;
+}
+body.royal-purple-theme {
+--bg-color:#8a64b0;
+--card-bg:#8a64b0;
+--text-color:#fff;
+--line-color:#41265c;
+--point-default:#b497d4;
+--point-border:#5a3c7a;
+--accent-color:#ffd700;
+--selected-border:#fff;
+--hint-color:#dfd0f2;
+--remove-color:#9e1f1f;
+}
+body.ocean-slate-theme {
+--bg-color:#649cb0;
+--card-bg:#649cb0;
+--text-color:#0d2733;
+--line-color:#1e414f;
+--point-default:#97c4d4;
+--point-border:#315d6e;
+--accent-color:#073445;
+--selected-border:#fff;
+--hint-color:#dcf0f7;
+--remove-color:#801d1d;
+}
+* {box-sizing:border-box;}
+body {
+font-family:Arial,sans-serif;
+background:var(--bg-color);
+color:var(--text-color);
+display:flex;
+flex-direction:column;
+align-items:center;
+min-height:100vh;
+margin:0;
+padding:12px;
+transition:background .3s,color .3s;
+}
+h1 {font-size:1.35rem;margin:6px 0;}
+#timer-display {
+font-size:.85rem;
+font-weight:bold;
+color:#ff9500;
+min-height:20px;
+}
+#status {
+font-size:.9rem;
+margin:8px 0 12px;
+color:var(--accent-color);
+font-weight:bold;
+text-align:center;
+}
+.board-container {
+position:relative;
+width:min(280px,88vw);
+height:min(280px,88vw);
+background:var(--card-bg);
+}
+.board-svg {
+position:absolute;
+inset:0;
+width:100%;
+height:100%;
+}
+line {
+stroke:var(--line-color);
+stroke-width:2.5;
+}
+.point {
+position:absolute;
+width:24px;
+height:24px;
+border-radius:50%;
+background:var(--point-default);
+border:2px solid var(--point-border);
+transform:translate(-50%,-50%);
+cursor:pointer;
+display:flex;
+align-items:center;
+justify-content:center;
+touch-action:manipulation;
+}
+.point.red {
+background:var(--red-color);
+border-color:var(--red-color);
+}
+.point.blue {
+background:var(--blue-color);
+border-color:var(--blue-color);
+}
+.point.selected {
+border:3px solid var(--selected-border)!important;
+transform:translate(-50%,-50%) scale(1.2);
+}
+.point.hint {
+border:2px solid var(--hint-color)!important;
+background:var(--hint-color)!important;
+transform:translate(-50%,-50%) scale(1.1);
+}
+.point.remove-target {
+border:3px solid var(--remove-color)!important;
+animation:blink .8s infinite;
+}
+.point.in-mill {
+border:3px solid #ffcc00!important;
+box-shadow:0 0 10px #ffcc00;
+}
+@keyframes blink {
+50% {border-color:transparent;}
+}
+.bottom-controls {
+margin-top:16px;
+display:grid;
+grid-template-columns:1fr 1fr;
+gap:8px;
+width:min(280px,88vw);
+}
+.bottom-controls label {
+display:flex;
+flex-direction:column;
+font-size:.72rem;
+gap:4px;
+}
+select,button.btn {
+padding:9px;
+border-radius:6px;
+background:var(--card-bg);
+color:var(--text-color);
+border:1px solid var(--line-color);
+font-size:.82rem;
+width:100%;
+}
+button.btn {font-weight:bold;}
+.game-footer {
+margin:16px 0 8px;
+font-size:.8rem;
+text-align:center;
+}
+.modal {
+display:none;
+position:fixed;
+inset:0;
+background:#0009;
+justify-content:center;
+align-items:center;
+z-index:10;
+padding:15px;
+}
+.modal-content {
+background:var(--bg-color);
+border:2px solid var(--line-color);
+padding:16px;
+border-radius:10px;
+width:min(290px,90vw);
+color:var(--text-color);
+}
+.modal-content h3 {margin-top:0;}
+.modal-content input,.modal-content select {
+width:100%;
+padding:9px;
+margin:5px 0 12px;
+border-radius:5px;
+border:1px solid var(--line-color);
+background:var(--card-bg);
+color:var(--text-color);
+}
+/* Subtle in-game falling confetti. Board stays visible; no popup or controls. */
+#winOverlay{display:none;position:fixed;inset:0;z-index:100;overflow:hidden;pointer-events:none}
+#winOverlay.show{display:block}
+#confettiLayer{position:absolute;inset:0;overflow:hidden;pointer-events:none}
+.confetti{position:absolute;top:-18px;width:7px;height:12px;border-radius:3px;opacity:0;will-change:transform,opacity;animation:dotFall var(--fall-time) linear forwards;animation-delay:var(--delay)}
+.confetti.dot{width:8px;height:8px;border-radius:50%}
+@keyframes dotFall{0%{opacity:0;transform:translate3d(0,-2vh,0) rotate(0deg)}8%{opacity:.95}85%{opacity:.9}100%{opacity:0;transform:translate3d(var(--drift),108vh,0) rotate(540deg)}}
+@media(prefers-reduced-motion:reduce){.confetti{animation-duration:.01ms!important}}
+</style>
+</head>
+<body class="light-theme">
+
+<div id="nameModal" class="modal">
+<div class="modal-content">
+<h3>Player Settings</h3>
+<label>Player 1 Name:</label>
+<input id="p1Input" value="Red" maxlength="30">
+<label>Player 1 Color:</label>
+<select id="p1ColorSelect">
+<option value="#ff3b30">Red</option>
+<option value="#28a745">Green</option>
+<option value="#3399ff">Blue</option>
+<option value="#ffcc00">Yellow</option>
+<option value="#9b59b6">Purple</option>
+</select>
+<label>Player 2 Name:</label>
+<input id="p2Input" value="Blue" maxlength="30">
+<label>Player 2 Color:</label>
+<select id="p2ColorSelect">
+<option value="#3399ff">Blue</option>
+<option value="#28a745">Green</option>
+<option value="#ff3b30">Red</option>
+<option value="#ffcc00">Yellow</option>
+<option value="#9b59b6">Purple</option>
+</select>
+<button class="btn" onclick="savePlayerSettings()">Save Settings</button>
+<button class="btn" onclick="closeNameModal()">Cancel</button>
+</div>
+</div>
+
+<h1>Nine Men's Morris</h1>
+<div id="timer-display">⏱️ Time: 15s</div>
+<div id="status">Red's turn: Place piece (9 left)</div>
+
+<div class="board-container" id="board">
+<svg class="board-svg" viewBox="0 0 280 280">
+<line x1="20" y1="20" x2="260" y2="20"/>
+<line x1="260" y1="20" x2="260" y2="260"/>
+<line x1="260" y1="260" x2="20" y2="260"/>
+<line x1="20" y1="260" x2="20" y2="20"/>
+<line x1="60" y1="60" x2="220" y2="60"/>
+<line x1="220" y1="60" x2="220" y2="220"/>
+<line x1="220" y1="220" x2="60" y2="220"/>
+<line x1="60" y1="220" x2="60" y2="60"/>
+<line x1="100" y1="100" x2="180" y2="100"/>
+<line x1="180" y1="100" x2="180" y2="180"/>
+<line x1="180" y1="180" x2="100" y2="180"/>
+<line x1="100" y1="180" x2="100" y2="100"/>
+<line x1="140" y1="20" x2="140" y2="100"/>
+<line x1="140" y1="180" x2="140" y2="260"/>
+<line x1="20" y1="140" x2="100" y2="140"/>
+<line x1="180" y1="140" x2="260" y2="140"/>
+</svg>
+</div>
+
+<div class="bottom-controls">
+<label>Theme
+<select onchange="changeTheme(this.value)">
+<option value="light">Light</option>
+<option value="dark">Dark</option>
+<option value="sage-green">Sage Green</option>
+<option value="warm-ochre">Warm Ochre</option>
+<option value="royal-purple">Royal Purple</option>
+<option value="ocean-slate">Ocean Slate</option>
+</select>
+</label>
+<label>Timer
+<select onchange="changeTimerSetting(this.value)">
+<option value="15">15 seconds</option>
+<option value="30">30 seconds</option>
+<option value="off">Off</option>
+</select>
+</label>
+<label>Undo
+<select onchange="handleUndoAction(this)">
+<option value="" selected>Choose</option>
+<option value="undo">Undo Last Move</option>
+</select>
+</label>
+<label>Reset
+<select onchange="handleResetAction(this)">
+<option value="" selected>Choose</option>
+<option value="restart">Restart Game</option>
+</select>
+</label>
+<label style="grid-column:span 2">
+<button class="btn" onclick="openNameModal()">Customize Players & Colors</button>
+</label>
+<label style="grid-column:span 2">
+<button class="btn" onclick="showTutorial()">📖 Tutorial Guide</button>
+</label>
+</div>
+
+<div class="game-footer">Created by Kamran</div>
+
+<!-- NON-BLOCKING 3D FALLING TOKEN ANIMATION -->
+<div id="winOverlay" aria-hidden="true"><div id="confettiLayer"></div></div>
+
+<script>
+const coords=[
+{x:20,y:20},{x:140,y:20},{x:260,y:20},
+{x:60,y:60},{x:140,y:60},{x:220,y:60},
+{x:100,y:100},{x:140,y:100},{x:180,y:100},
+{x:20,y:140},{x:60,y:140},{x:100,y:140},
+{x:180,y:140},{x:220,y:140},{x:260,y:140},
+{x:100,y:180},{x:140,y:180},{x:180,y:180},
+{x:60,y:220},{x:140,y:220},{x:220,y:220},
+{x:20,y:260},{x:140,y:260},{x:260,y:260}
+];
+
+const neighbors=[
+[1,9],[0,2,4],[1,14],[4,10],[1,3,5,7],[4,13],
+[7,11],[4,6,8],[7,12],[0,10,21],[3,9,11,18],
+[6,10,15],[8,13,17],[5,12,14,20],[2,13,23],
+[11,16],[15,17,19],[12,16],[10,19],[16,18,20,22],
+[13,19],[9,22],[19,21,23],[14,22]
+];
+
+const mills=[
+[0,1,2],[3,4,5],[6,7,8],[9,10,11],
+[12,13,14],[15,16,17],[18,19,20],[21,22,23],
+[0,9,21],[3,10,18],[6,11,15],[1,4,7],
+[16,19,22],[8,12,17],[5,13,20],[2,14,23]
+];
+
+let state=Array(24).fill(null);
+let turn='red';
+let phase='placing';
+let unplaced={red:9,blue:9};
+let activeCount={red:0,blue:0};
+let selectedIdx=null;
+let isGameOver=false;
+let historyStack=[];
+let playerNames={red:'Red',blue:'Blue'};
+let timerLimit=15;
+let timerInterval=null;
+let timeLeft=15;
+let celebrationTimer=null;
+
+const AudioClass=window.AudioContext||window.webkitAudioContext;
+let audioCtx=null;
+
+function playSound(freq,type='sine',duration=.15,volume=.5){
+    try{
+        if(!AudioClass)return;
+        if(!audioCtx)audioCtx=new AudioClass();
+        if(audioCtx.state==='suspended')audioCtx.resume();
+        const osc=audioCtx.createOscillator();
+        const gain=audioCtx.createGain();
+        osc.type=type;
+        osc.frequency.value=freq;
+        gain.gain.setValueAtTime(volume,audioCtx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(
+            .01,audioCtx.currentTime+duration
+        );
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.start();
+        osc.stop(audioCtx.currentTime+duration);
+    }catch(e){}
+}
+function playMoveSound(){playSound(520,'square',.12,.25);}
+function playMillSound(){
+    playSound(587,'triangle',.2,.35);
+    setTimeout(()=>playSound(880,'triangle',.25,.35),150);
+}
+function playRemoveSound(){playSound(180,'sawtooth',.2,.3);}
+function playWinSound(){
+    [523,659,784,1047,1318].forEach((f,i)=>{
+        setTimeout(()=>playSound(f,'sine',.35,.4),i*180);
+    });
+}
+
+function changeTheme(theme){
+    document.body.className=theme==='light'?'light-theme':theme+'-theme';
+}
+
+function openNameModal(){
+    document.getElementById('p1Input').value=playerNames.red;
+    document.getElementById('p2Input').value=playerNames.blue;
+    document.getElementById('nameModal').style.display='flex';
+}
+function closeNameModal(){
+    document.getElementById('nameModal').style.display='none';
+}
+function savePlayerSettings(){
+    const p1=document.getElementById('p1Input').value.trim();
+    const p2=document.getElementById('p2Input').value.trim();
+    const c1=document.getElementById('p1ColorSelect').value;
+    const c2=document.getElementById('p2ColorSelect').value;
+
+    if(c1===c2){
+        alert('Both players must choose different colors.');
+        return;
+    }
+    if(p1)playerNames.red=p1;
+    if(p2)playerNames.blue=p2;
+
+    document.documentElement.style.setProperty('--red-color',c1);
+    document.documentElement.style.setProperty('--blue-color',c2);
+    closeNameModal();
+    updateBoardUI();
+}
+
+function showTutorial(){
+    alert(
+`HOW TO PLAY
+
+1. Alternate placing 9 pieces each.
+2. Form a row of 3 to make a mill.
+3. A mill lets you remove one opponent piece.
+4. After placing all pieces, move to connected empty points.
+5. With exactly 3 pieces, you can fly to any empty point.
+6. Win by reducing the opponent to 2 pieces or blocking all moves.`
+    );
+}
+
+function changeTimerSetting(value){
+    timerLimit=value==='off'?0:parseInt(value,10);
+    resetTimer();
+}
+function startTimer(){
+    clearInterval(timerInterval);
+    if(timerLimit===0||isGameOver){
+        document.getElementById('timer-display').textContent='';
+        return;
+    }
+    timeLeft=timerLimit;
+    updateTimerUI();
+    timerInterval=setInterval(()=>{
+        timeLeft--;
+        updateTimerUI();
+        if(timeLeft<=0){
+            clearInterval(timerInterval);
+            if(phase==='removing'){
+                startTimer();
+                return;
+            }
+            selectedIdx=null;
+            switchTurn();
+            updateBoardUI();
+        }
+    },1000);
+}
+function resetTimer(){
+    clearInterval(timerInterval);
+    startTimer();
+}
+function updateTimerUI(){
+    document.getElementById('timer-display').textContent=
+        timerLimit>0?`⏱️ Time: ${timeLeft}s`:'';
+}
+
+function saveState(){
+    historyStack.push(JSON.stringify({
+        state:[...state],
+        turn,
+        phase,
+        unplaced:{...unplaced},
+        activeCount:{...activeCount},
+        selectedIdx,
+        isGameOver
+    }));
+    if(historyStack.length>100)historyStack.shift();
+}
+function handleUndoAction(el){
+    if(el.value==='undo'){
+        if(!historyStack.length){
+            alert('No moves to undo!');
+        }else if(confirm('Undo the last move?')){
+            undoMove();
+        }
+    }
+    el.selectedIndex=0;
+}
+function undoMove(){
+    if(!historyStack.length)return;
+    const old=JSON.parse(historyStack.pop());
+    state=old.state;
+    turn=old.turn;
+    phase=old.phase;
+    unplaced=old.unplaced;
+    activeCount=old.activeCount;
+    selectedIdx=old.selectedIdx;
+    isGameOver=old.isGameOver;
+    closeWinOverlay();
+    resetTimer();
+    updateBoardUI();
+}
+function handleResetAction(el){
+    if(el.value==='restart')confirmReset();
+    el.selectedIndex=0;
+}
+
+function initBoard(){
+    const board=document.getElementById('board');
+    board.querySelectorAll('.point').forEach(p=>p.remove());
+    coords.forEach((c,i)=>{
+        const point=document.createElement('div');
+        point.className='point';
+        point.style.left=c.x+'px';
+        point.style.top=c.y+'px';
+        point.setAttribute('role','button');
+        point.setAttribute('aria-label','Board position '+(i+1));
+        point.onclick=()=>handleClick(i);
+        board.appendChild(point);
+    });
+}
+function getOpponent(p){return p==='red'?'blue':'red';}
+function getPlayerName(p){return playerNames[p];}
+function checkMill(idx,p){
+    return mills.some(m=>m.includes(idx)&&m.every(i=>state[i]===p));
+}
+function isPieceInMill(idx){
+    const p=state[idx];
+    if(!p)return false;
+    return mills.some(m=>m.includes(idx)&&m.every(i=>state[i]===p));
+}
+function canPlayerMove(p){
+    if(activeCount[p]===3)return state.some(x=>x===null);
+    for(let i=0;i<24;i++){
+        if(state[i]===p&&neighbors[i].some(n=>state[n]===null)){
+            return true;
+        }
+    }
+    return false;
+}
+function checkWinCondition(){
+    const opponent=getOpponent(turn);
+    if(unplaced[opponent]===0&&activeCount[opponent]<=2){
+        triggerWin(turn);
+        return true;
+    }
+    if(phase==='moving'&&unplaced[opponent]===0){
+        if(!canPlayerMove(opponent)){
+            triggerWin(turn);
+            return true;
+        }
+    }
+    return false;
+}
+
+function updateBoardUI(){
+    const points=document.querySelectorAll('.point');
+    const opp=getOpponent(turn);
+    const flying=phase==='moving'&&activeCount[turn]===3;
+    const hasNonMill=phase==='removing'&&state.some(
+        (p,i)=>p===opp&&!isPieceInMill(i)
+    );
+
+    points.forEach((pt,i)=>{
+        pt.className='point';
+        if(state[i])pt.classList.add(state[i]);
+        if(isPieceInMill(i))pt.classList.add('in-mill');
+        if(selectedIdx===i)pt.classList.add('selected');
+
+        if(phase==='moving'&&selectedIdx!==null&&state[i]===null){
+            if(flying||neighbors[selectedIdx].includes(i)){
+                pt.classList.add('hint');
+            }
+        }
+        if(phase==='removing'&&state[i]===opp){
+            if(!hasNonMill||!isPieceInMill(i)){
+                pt.classList.add('remove-target');
+            }
+        }
+    });
+
+    if(isGameOver)return;
+
+    const name=getPlayerName(turn);
+    if(phase==='placing'){
+        document.getElementById('status').textContent=
+            `${name}'s turn: Place piece (${unplaced[turn]} left)`;
+    }else if(phase==='moving'){
+        document.getElementById('status').textContent=
+            `${name}'s turn: ${flying?'FLY MODE':'Move piece'}`;
+    }else{
+        document.getElementById('status').textContent=
+            `${name}'s turn: Remove opponent piece!`;
+    }
+}
+
+function triggerWin(winner){
+    if(isGameOver)return;
+    isGameOver=true;
+    clearInterval(timerInterval);
+    clearTimeout(celebrationTimer);
+    playWinSound();
+
+    document.getElementById('status').textContent=
+        `🏆 ${getPlayerName(winner)} Wins!`;
+    document.getElementById('timer-display').textContent='';
+
+    showWinnerCelebration(winner);
+}
+
+function showWinnerCelebration(winner){
+    const overlay=document.getElementById('winOverlay');
+    const layer=document.getElementById('confettiLayer');
+    layer.innerHTML='';
+    overlay.classList.add('show');
+
+    // Small colorful dots and paper-like flecks fall over the live board.
+    const colors=['#ff4d6d','#ffbe0b','#3a86ff','#8338ec','#06d6a0','#ff7b00','#f15bb5'];
+    for(let i=0;i<58;i++){
+        const particle=document.createElement('span');
+        particle.className='confetti'+(Math.random()<.58?' dot':'');
+        particle.style.left=(Math.random()*100)+'%';
+        particle.style.background=colors[Math.floor(Math.random()*colors.length)];
+        particle.style.setProperty('--fall-time',(3.2+Math.random()*2.2)+'s');
+        particle.style.setProperty('--delay',(Math.random()*1.4)+'s');
+        particle.style.setProperty('--drift',((Math.random()-.5)*100)+'px');
+        layer.appendChild(particle);
+    }
+    celebrationTimer=setTimeout(()=>{
+        layer.innerHTML='';
+        overlay.classList.remove('show');
+    },7000);
+}
+
+function closeWinOverlay(){
+    document.getElementById('winOverlay').classList.remove('show');
+    document.getElementById('confettiLayer').innerHTML='';
+    clearTimeout(celebrationTimer);
+}
+
+function newGameFromOverlay(){
+    closeWinOverlay();
+    resetGame();
+}
+
+function handleClick(idx){
+    if(isGameOver)return;
+
+    if(phase==='placing'){
+        if(state[idx]!==null)return;
+
+        saveState();
+        state[idx]=turn;
+        unplaced[turn]--;
+        activeCount[turn]++;
+
+        if(checkMill(idx,turn)){
+            playMillSound();
+            phase='removing';
+            resetTimer();
+        }else{
+            playMoveSound();
+            switchTurn();
+        }
+    }
+
+    else if(phase==='moving'){
+        const flying=activeCount[turn]===3;
+
+        if(selectedIdx===null){
+            if(state[idx]===turn)selectedIdx=idx;
+        }else if(idx===selectedIdx){
+            selectedIdx=null;
+        }else if(
+            state[idx]===null&&
+            (flying||neighbors[selectedIdx].includes(idx))
+        ){
+            saveState();
+            state[idx]=turn;
+            state[selectedIdx]=null;
+            selectedIdx=null;
+
+            if(checkMill(idx,turn)){
+                playMillSound();
+                phase='removing';
+                resetTimer();
+            }else{
+                playMoveSound();
+                switchTurn();
+                if(checkWinCondition()){
+                    updateBoardUI();
+                    return;
+                }
+            }
+        }else if(state[idx]===turn){
+            selectedIdx=idx;
+        }
+    }
+
+    else if(phase==='removing'){
+        const opp=getOpponent(turn);
+        if(state[idx]!==opp)return;
+
+        const hasNonMill=state.some(
+            (p,i)=>p===opp&&!isPieceInMill(i)
+        );
+        if(hasNonMill&&isPieceInMill(idx))return;
+
+        saveState();
+        playRemoveSound();
+        state[idx]=null;
+        activeCount[opp]--;
+
+        if(unplaced[opp]===0&&activeCount[opp]<=2){
+            triggerWin(turn);
+            updateBoardUI();
+            return;
+        }
+
+        phase=(unplaced.red===0&&unplaced.blue===0)
+            ?'moving':'placing';
+
+        switchTurn();
+
+        if(phase==='moving'&&checkWinCondition()){
+            updateBoardUI();
+            return;
+        }
+    }
+
+    updateBoardUI();
+}
+
+function switchTurn(){
+    turn=getOpponent(turn);
+    if(unplaced.red===0&&unplaced.blue===0&&phase!=='removing'){
+        phase='moving';
+    }
+    resetTimer();
+}
+
+function confirmReset(){
+    if(confirm('Are you sure you want to restart the game?')){
+        resetGame();
+    }
+}
+
+function resetGame(){
+    clearTimeout(celebrationTimer);
+    closeWinOverlay();
+    state=Array(24).fill(null);
+    turn='red';
+    phase='placing';
+    unplaced={red:9,blue:9};
+    activeCount={red:0,blue:0};
+    selectedIdx=null;
+    isGameOver=false;
+    historyStack=[];
+    resetTimer();
+    updateBoardUI();
+}
+
+initBoard();
+updateBoardUI();
+startTimer();
+</script>
+</body>
+</html>
